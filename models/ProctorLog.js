@@ -13,8 +13,8 @@ const proctorLogSchema = new mongoose.Schema(
       required: true,
     },
     type: {
-      type: String, // TAB_SWITCH, FULLSCREEN_EXIT, CAMERA_DENIED
-      required: true,
+      type: String,
+      required: true, // TAB_SWITCH, FULLSCREEN_EXIT, WEBCAM_STOP, BLUR
     },
     message: {
       type: String,

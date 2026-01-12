@@ -1,17 +1,18 @@
 const express = require("express");
 const ProctorLog = require("../models/ProctorLog");
+const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
 /**
- * SAVE PROCTOR VIOLATION
+ * SAVE PROCTOR VIOLATION (STUDENT)
  */
-router.post("/log", async (req, res) => {
+router.post("/log", authMiddleware, async (req, res) => {
   try {
-    const { studentId, examId, type, message } = req.body;
+    const { examId, type, message } = req.body;
 
     const log = await ProctorLog.create({
-      student: studentId,
+      student: req.user.id, // 🔥 TRUST BACKEND ONLY
       exam: examId,
       type,
       message,
@@ -19,22 +20,24 @@ router.post("/log", async (req, res) => {
 
     res.status(201).json(log);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("PROCTOR LOG ERROR:", err);
+    res.status(500).json({ message: "Failed to log violation" });
   }
 });
 
 /**
  * ADMIN – GET ALL LOGS
  */
-router.get("/", async (req, res) => {
+router.get("/", authMiddleware, async (req, res) => {
   try {
     const logs = await ProctorLog.find()
+      .sort({ createdAt: -1 }) // 🔥 latest first
       .populate("student", "name email")
       .populate("exam", "title");
 
     res.json(logs);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Failed to fetch logs" });
   }
 });
 

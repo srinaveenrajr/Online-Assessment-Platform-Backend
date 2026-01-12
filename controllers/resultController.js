@@ -14,13 +14,11 @@ const submitExam = async (req, res) => {
     }
 
     const exam = await Exam.findById(examId).populate("questions");
-
     if (!exam) {
       return res.status(404).json({ message: "Exam not found" });
     }
 
     let score = 0;
-
     exam.questions.forEach((q) => {
       if (answers[q._id] === q.correctAnswer) {
         score += 1;
@@ -36,58 +34,77 @@ const submitExam = async (req, res) => {
 
     await result.save();
 
-    res.status(201).json({
-      message: "Exam submitted successfully",
-      score,
-    });
+    res.status(201).json({ message: "Submitted", score });
   } catch (err) {
-    console.error("Submit error:", err);
     res.status(500).json({ message: "Submit failed" });
   }
 };
 
 /* ===========================
-   ADMIN: ANALYTICS (FIXED)
+   STUDENT: GET RESULT BY EXAM
+=========================== */
+const getStudentResultByExam = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { examId } = req.params;
+
+    const result = await Result.findOne({
+      user: userId,
+      exam: examId,
+    })
+      .populate("exam", "title")
+      .sort({ createdAt: -1 });
+
+    if (!result) {
+      return res.status(404).json({ message: "Result not found" });
+    }
+
+    res.json({
+      examTitle: result.exam.title,
+      score: result.score,
+      submittedAt: result.createdAt,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch result" });
+  }
+};
+
+/* ===========================
+   ADMIN: ANALYTICS
 =========================== */
 const getDetailedAnalyticsByExam = async (req, res) => {
   try {
     const { examId } = req.params;
-
-    if (!examId) {
-      return res.status(400).json({ message: "Exam ID missing" });
-    }
 
     const results = await Result.find({ exam: examId })
       .populate("user", "name email")
       .populate("exam", "title")
       .sort({ createdAt: 1 });
 
-    const analyticsMap = {};
+    const map = {};
 
     results.forEach((r) => {
-      const userId = r.user._id.toString();
-
-      if (!analyticsMap[userId]) {
-        analyticsMap[userId] = {
+      const uid = r.user._id.toString();
+      if (!map[uid]) {
+        map[uid] = {
           username: r.user.name || r.user.email,
           examTitle: r.exam.title,
           attempts: 0,
           latestScore: r.score,
         };
       }
-
-      analyticsMap[userId].attempts += 1;
-      analyticsMap[userId].latestScore = r.score;
+      map[uid].attempts += 1;
+      map[uid].latestScore = r.score;
     });
 
-    res.json(Object.values(analyticsMap));
-  } catch (err) {
-    console.error("Analytics error:", err);
+    res.json(Object.values(map));
+  } catch {
     res.status(500).json({ message: "Analytics failed" });
   }
 };
 
 module.exports = {
   submitExam,
+  getStudentResultByExam,
   getDetailedAnalyticsByExam,
 };
