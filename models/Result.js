@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const resultSchema = new mongoose.Schema(
   {
-    student: {
+    user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -14,10 +14,6 @@ const resultSchema = new mongoose.Schema(
     },
     score: {
       type: Number,
-      required: true,
-    },
-    answers: {
-      type: Array,
       required: true,
     },
   },
