@@ -1,32 +1,39 @@
 const Exam = require("../models/Exam");
-const Question = require("../models/Question");
+const QuestionBank = require("../models/QuestionBank");
 
-/**
- * ADMIN: CREATE EXAM
- */
+/* =========================================
+   ADMIN: CREATE EXAM
+========================================= */
 exports.createExam = async (req, res) => {
   try {
-    const { title, startTime, endTime } = req.body;
+    const { title, startTime, endTime, questionBankId } = req.body;
 
-    if (!title || !startTime || !endTime) {
-      return res.status(400).json({ message: "Missing required fields" });
+    if (!title || !startTime || !endTime || !questionBankId) {
+      return res.status(400).json({
+        message: "Title, time, and question bank are required",
+      });
     }
 
-    // 🔹 STEP 1: get all questions
-    const questions = await Question.find({}, "_id");
+    // 1️⃣ Get selected Question Bank
+    const questionBank = await QuestionBank.findById(questionBankId);
 
-    // 🔹 STEP 2: extract only IDs
-    const questionIds = questions.map((q) => q._id);
+    if (!questionBank) {
+      return res.status(404).json({ message: "Question bank not found" });
+    }
 
-    // 🔹 STEP 3: create exam with questions
-    const exam = new Exam({
+    if (!questionBank.questions || questionBank.questions.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Question bank has no questions" });
+    }
+
+    // 2️⃣ Create exam using ONLY selected questions
+    const exam = await Exam.create({
       title,
       startTime,
       endTime,
-      questions: questionIds,
+      questions: questionBank.questions,
     });
-
-    await exam.save();
 
     res.status(201).json(exam);
   } catch (err) {
@@ -35,29 +42,28 @@ exports.createExam = async (req, res) => {
   }
 };
 
-/**
- * STUDENT: GET ALL EXAMS
- */
+/* =========================================
+   STUDENT: GET ALL EXAMS  ✅ (FIX)
+========================================= */
 exports.getAllExams = async (req, res) => {
   try {
-    const exams = await Exam.find().sort({ startTime: 1 });
+    const exams = await Exam.find()
+      .select("title startTime endTime createdAt")
+      .sort({ createdAt: -1 });
+
     res.json(exams);
   } catch (err) {
+    console.error("Get all exams error:", err);
     res.status(500).json({ message: "Failed to fetch exams" });
   }
 };
 
-/**
- * STUDENT: GET SINGLE EXAM WITH QUESTIONS
- */
+/* =========================================
+   STUDENT: GET EXAM BY ID
+========================================= */
 exports.getExamById = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const exam = await Exam.findById(id).populate({
-      path: "questions",
-      select: "questionText options",
-    });
+    const exam = await Exam.findById(req.params.id).populate("questions");
 
     if (!exam) {
       return res.status(404).json({ message: "Exam not found" });
