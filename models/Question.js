@@ -12,6 +12,18 @@ const questionSchema = new mongoose.Schema({
   correctAnswer: {
     type: String,
   },
+
+  // ✅ REQUIRED FOR FILTERING
+  topic: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  difficulty: {
+    type: String,
+    enum: ["easy", "medium", "hard"],
+    required: true,
+  },
 });
 
 module.exports = mongoose.model("Question", questionSchema);

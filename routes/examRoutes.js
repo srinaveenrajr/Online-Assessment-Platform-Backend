@@ -10,6 +10,26 @@ const examController = require("../controllers/examController");
 // Create exam
 router.post("/", authMiddleware, adminMiddleware, examController.createExam);
 
+// ✅ UPDATE exam (ADMIN)
+router.put("/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const updatedExam = await examController.updateExam(req, res);
+    return updatedExam;
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update exam" });
+  }
+});
+
+// ✅ DELETE exam (ADMIN)
+router.delete("/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const deletedExam = await examController.deleteExam(req, res);
+    return deletedExam;
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete exam" });
+  }
+});
+
 /* ================= STUDENT ================= */
 
 // Get all exams
