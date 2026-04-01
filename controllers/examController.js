@@ -2,14 +2,6 @@ const Exam = require("../models/Exam");
 const QuestionBank = require("../models/QuestionBank");
 
 /* ===========================
-   HELPER: FIX TIMEZONE ISSUE
-=========================== */
-const toISTDate = (localDateTime) => {
-  // Append IST offset so MongoDB does not shift time
-  return new Date(`${localDateTime}:00+05:30`);
-};
-
-/* ===========================
    ADMIN: CREATE EXAM
 =========================== */
 exports.createExam = async (req, res) => {
@@ -27,8 +19,8 @@ exports.createExam = async (req, res) => {
 
     const exam = await Exam.create({
       title,
-      startTime: toISTDate(startTime),
-      endTime: toISTDate(endTime),
+      startTime: new Date(startTime),
+      endTime: new Date(endTime),
       questions: questionBank.questions,
     });
 
@@ -48,10 +40,10 @@ exports.updateExam = async (req, res) => {
     if (!exam) return res.status(404).json({ message: "Exam not found" });
 
     if (req.body.startTime) {
-      req.body.startTime = toISTDate(req.body.startTime);
+      req.body.startTime = new Date(req.body.startTime);
     }
     if (req.body.endTime) {
-      req.body.endTime = toISTDate(req.body.endTime);
+      req.body.endTime = new Date(req.body.endTime);
     }
 
     Object.assign(exam, req.body);

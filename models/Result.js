@@ -16,6 +16,22 @@ const resultSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    totalQuestions: {
+      type: Number,
+      default: 10,
+    },
+    timeTaken: {
+      type: Number, // in seconds
+    },
+    startTime: {
+      type: Date,
+    },
+    endTime: {
+      type: Date,
+    },
+    answers: {
+      type: Object, // Stores questionId: selectedOptionIndex
+    },
   },
   { timestamps: true }
 );
